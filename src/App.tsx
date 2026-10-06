@@ -78,6 +78,7 @@ export default function App() {
   const [isIngredientScoutOpen, setIsIngredientScoutOpen] = useState<boolean>(false);
 
   // Loading & error
+  const [hasAuditedFridge, setHasAuditedFridge] = useState<boolean>(false);
   const [isAnalyzingFridge, setIsAnalyzingFridge] = useState<boolean>(false);
   const [isGeneratingCuisine, setIsGeneratingCuisine] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -100,7 +101,12 @@ export default function App() {
     dietaryRestrictions: string[];
   }) => {
     setIsAnalyzingFridge(true);
+    setHasAuditedFridge(true);
     setErrorMessage(null);
+
+    setTimeout(() => {
+      document.getElementById('stream-audit-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
 
     try {
       const response = await fetch('/api/analyze-fridge', {
@@ -322,14 +328,16 @@ export default function App() {
               currentIngredients={fridgeIngredients}
             />
 
-            {/* Recommended Meal from TheMealDB Data Stream based on user selection */}
-            {fridgeIngredients.length > 0 && (
-              <StreamMealRecommendation
-                fridgeIngredients={fridgeIngredients}
-                onSelectRecipe={(recipe) => setSelectedMealDbRecipe(recipe)}
-                onViewAllStreamRecipes={() => setActiveTab('mealdb')}
-                onAddMissingToShoppingList={handleAddStreamMissingIngredients}
-              />
+            {/* Audit Fridge & Suggest Meals section from Data Stream: appears ONLY after clicking the audit button */}
+            {hasAuditedFridge && fridgeIngredients.length > 0 && (
+              <div id="stream-audit-section" className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <StreamMealRecommendation
+                  fridgeIngredients={fridgeIngredients}
+                  onSelectRecipe={(recipe) => setSelectedMealDbRecipe(recipe)}
+                  onViewAllStreamRecipes={() => setActiveTab('mealdb')}
+                  onAddMissingToShoppingList={handleAddStreamMissingIngredients}
+                />
+              </div>
             )}
 
             {/* Verified Inventory Section (if analyzed or has items) */}
