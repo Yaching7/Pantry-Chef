@@ -9,6 +9,9 @@ import {
   Flame,
   ChefHat,
   Tag,
+  Camera,
+  MapPin,
+  Check,
 } from 'lucide-react';
 import { DetectedIngredient, IngredientCategory } from '../types';
 
@@ -51,6 +54,7 @@ export const FridgeInventoryView: React.FC<FridgeInventoryViewProps> = ({
   }, {} as Record<string, DetectedIngredient[]>);
 
   const expiringSoonCount = detectedIngredients.filter((i) => i.isExpiringSoon).length;
+  const photoDetectedCount = detectedIngredients.filter((i) => i.source === 'photo').length;
 
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +77,12 @@ export const FridgeInventoryView: React.FC<FridgeInventoryViewProps> = ({
               <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                 Chef's Fridge Audit &amp; Insights
               </span>
+              {photoDetectedCount > 0 && (
+                <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                  <Camera className="w-3 h-3 mr-1" />
+                  {photoDetectedCount} from photo scan
+                </span>
+              )}
               {expiringSoonCount > 0 && (
                 <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -137,13 +147,25 @@ export const FridgeInventoryView: React.FC<FridgeInventoryViewProps> = ({
                 {items.map((item, idx) => (
                   <div
                     key={`${item.name}-${idx}`}
+                    title={item.notes ? `Note: ${item.notes}` : undefined}
                     className={`group relative flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-medium bg-white dark:bg-stone-800 transition-all shadow-xs ${
                       item.isExpiringSoon
                         ? 'border-rose-400 dark:border-rose-700 text-rose-900 dark:text-rose-200'
                         : 'border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200'
                     }`}
                   >
-                    <span>{item.name}</span>
+                    {item.source === 'photo' && (
+                      <span title="Detected by AI Photo Scan" className="flex items-center">
+                        <Camera className="w-3 h-3 text-sky-500 shrink-0" />
+                      </span>
+                    )}
+                    <span className="font-semibold">{item.name}</span>
+                    {item.locationInFridge && (
+                      <span className="text-[10px] text-stone-400 dark:text-stone-500 font-normal flex items-center">
+                        <MapPin className="w-2.5 h-2.5 mr-0.5 text-stone-400" />
+                        {item.locationInFridge}
+                      </span>
+                    )}
                     {item.estimatedState && (
                       <span className="text-[10px] text-stone-400 dark:text-stone-500 font-normal">
                         • {item.estimatedState}

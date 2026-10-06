@@ -16,6 +16,9 @@ export interface DetectedIngredient {
   estimatedState?: string;
   isExpiringSoon?: boolean;
   notes?: string;
+  confidence?: number;
+  source?: 'photo' | 'manual';
+  locationInFridge?: string;
 }
 
 export type StoreCategoryBadge =

@@ -299,7 +299,7 @@ export default function App() {
       setFridgeIngredients((prev) => [...prev, name]);
       setDetectedDetails((prev) => [
         ...prev,
-        { name, category: 'Other', estimatedState: 'Manual entry' },
+        { name, category: 'Other', estimatedState: 'Manual entry', source: 'manual' },
       ]);
     }
   };
