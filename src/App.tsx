@@ -30,6 +30,7 @@ import { ShoppingListModal } from './components/ShoppingListModal';
 import { IngredientScoutModal } from './components/IngredientScoutModal';
 import { MealDbExplorer } from './components/MealDbExplorer';
 import { MealDbRecipeModal } from './components/MealDbRecipeModal';
+import { StreamMealRecommendation } from './components/StreamMealRecommendation';
 
 import {
   DetectedIngredient,
@@ -306,6 +307,15 @@ export default function App() {
               onSetIngredientsList={setFridgeIngredients}
               currentIngredients={fridgeIngredients}
             />
+
+            {/* Recommended Meal from TheMealDB Data Stream based on user selection */}
+            {fridgeIngredients.length > 0 && (
+              <StreamMealRecommendation
+                fridgeIngredients={fridgeIngredients}
+                onSelectRecipe={(recipe) => setSelectedMealDbRecipe(recipe)}
+                onViewAllStreamRecipes={() => setActiveTab('mealdb')}
+              />
+            )}
 
             {/* Verified Inventory Section (if analyzed or has items) */}
             {detectedDetails.length > 0 && (
