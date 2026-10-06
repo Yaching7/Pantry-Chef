@@ -1,9 +1,9 @@
 import React from 'react';
-import { Refrigerator, Globe2, ShoppingCart, Search, UtensilsCrossed, Sparkles } from 'lucide-react';
+import { Refrigerator, Globe2, ShoppingCart, Search, UtensilsCrossed, Sparkles, Database } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'fridge' | 'cuisine';
-  setActiveTab: (tab: 'fridge' | 'cuisine') => void;
+  activeTab: 'fridge' | 'mealdb' | 'cuisine';
+  setActiveTab: (tab: 'fridge' | 'mealdb' | 'cuisine') => void;
   fridgeItemCount: number;
   shoppingListCount: number;
   onOpenShoppingList: () => void;
@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs text-stone-500 dark:text-stone-400 hidden sm:block">
-                Fridge ingredients to meals • Store &amp; aisle buying guides
+                TheMealDB recipes • Fridge matching • Store &amp; aisle buying guides
               </p>
             </div>
           </div>
@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="flex items-center bg-stone-100 dark:bg-stone-800/80 p-1 rounded-xl border border-stone-200 dark:border-stone-700">
             <button
               onClick={() => setActiveTab('fridge')}
-              className={`flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 activeTab === 'fridge'
                   ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm'
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
@@ -62,15 +62,27 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('mealdb')}
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'mealdb'
+                  ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm'
+                  : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+              }`}
+            >
+              <Database className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              <span>2. TheMealDB Recipes</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('cuisine')}
-              className={`flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+              className={`flex items-center space-x-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 activeTab === 'cuisine'
                   ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm'
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
               }`}
             >
               <Globe2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>2. Choose Cuisine</span>
+              <span>3. AI Cuisine Scout</span>
             </button>
           </nav>
 

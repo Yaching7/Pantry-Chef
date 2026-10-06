@@ -115,6 +115,27 @@ export interface FridgeAuditResponse {
   meals: QuickFridgeMeal[];
 }
 
+export interface MealDBIngredient {
+  name: string;
+  measure: string;
+}
+
+export interface MealDBRecipe {
+  idMeal: string;
+  strMeal: string;
+  strCategory: string;
+  strArea: string;
+  strInstructions: string;
+  strMealThumb: string;
+  strTags?: string | null;
+  strYoutube?: string;
+  strSource?: string;
+  ingredients: MealDBIngredient[];
+  matchScorePercent?: number;
+  inFridgeIngredients?: string[];
+  missingIngredients?: string[];
+}
+
 export interface IngredientScoutResult {
   ingredient: string;
   bestStores: string[];

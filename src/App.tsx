@@ -28,6 +28,8 @@ import { RecipeCard } from './components/RecipeCard';
 import { RecipeDetailModal } from './components/RecipeDetailModal';
 import { ShoppingListModal } from './components/ShoppingListModal';
 import { IngredientScoutModal } from './components/IngredientScoutModal';
+import { MealDbExplorer } from './components/MealDbExplorer';
+import { MealDbRecipeModal } from './components/MealDbRecipeModal';
 
 import {
   DetectedIngredient,
@@ -36,6 +38,7 @@ import {
   CuisineRecipe,
   MissingIngredientDetail,
   IngredientScoutResult,
+  MealDBRecipe,
 } from './types';
 
 interface ShoppingItem extends MissingIngredientDetail {
@@ -44,8 +47,8 @@ interface ShoppingItem extends MissingIngredientDetail {
 }
 
 export default function App() {
-  // Navigation tab: 'fridge' or 'cuisine'
-  const [activeTab, setActiveTab] = useState<'fridge' | 'cuisine'>('fridge');
+  // Navigation tab: 'fridge' | 'mealdb' | 'cuisine'
+  const [activeTab, setActiveTab] = useState<'fridge' | 'mealdb' | 'cuisine'>('fridge');
 
   // Fridge state
   const [fridgeIngredients, setFridgeIngredients] = useState<string[]>([
@@ -69,6 +72,7 @@ export default function App() {
 
   // Modals & Drawers
   const [selectedRecipe, setSelectedRecipe] = useState<CuisineRecipe | QuickFridgeMeal | null>(null);
+  const [selectedMealDbRecipe, setSelectedMealDbRecipe] = useState<MealDBRecipe | null>(null);
   const [isShoppingListOpen, setIsShoppingListOpen] = useState<boolean>(false);
   const [isIngredientScoutOpen, setIsIngredientScoutOpen] = useState<boolean>(false);
 
@@ -354,7 +358,18 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 2: CUISINE SCOUT & STORE SHOPPING GUIDE */}
+        {/* TAB 2: THEMEALDB RECIPE DATABASE */}
+        {activeTab === 'mealdb' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            <MealDbExplorer
+              fridgeIngredients={fridgeIngredients}
+              onSelectRecipe={(recipe) => setSelectedMealDbRecipe(recipe)}
+              onOpenShoppingList={() => setIsShoppingListOpen(true)}
+            />
+          </div>
+        )}
+
+        {/* TAB 3: CUISINE SCOUT & STORE SHOPPING GUIDE */}
         {activeTab === 'cuisine' && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Cuisine Selector Component */}
@@ -516,6 +531,16 @@ export default function App() {
           recipe={selectedRecipe}
           onClose={() => setSelectedRecipe(null)}
           onAddMissingToShoppingList={handleAddMissingToShoppingList}
+        />
+      )}
+
+      {/* 2. TheMealDB Recipe Detail & Store Scout Modal */}
+      {selectedMealDbRecipe && (
+        <MealDbRecipeModal
+          recipe={selectedMealDbRecipe}
+          onClose={() => setSelectedMealDbRecipe(null)}
+          onAddMissingToShoppingList={handleAddMissingToShoppingList}
+          fridgeIngredients={fridgeIngredients}
         />
       )}
 

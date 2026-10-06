@@ -378,6 +378,155 @@ Return JSON:
   }
 });
 
+/**
+ * 4. TheMealDB Database Endpoint
+ * Returns curated meal database based on chicken_breast endpoint (and supports other ingredients)
+ */
+app.get('/api/mealdb/recipes', async (req, res) => {
+  try {
+    const ingredient = (req.query.ingredient as string) || 'chicken_breast';
+    const jsonPath = path.resolve(__dirname, 'src/data/mealdb_chicken_recipes.json');
+
+    // If default chicken_breast and local file exists, serve immediately
+    const fs = await import('fs');
+    if (ingredient === 'chicken_breast' && fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      return res.json({ ingredient, count: data.length, meals: data });
+    }
+
+    // Otherwise fetch dynamically from TheMealDB
+    const filterUrl = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`;
+    const filterRes = await fetch(filterUrl);
+    const filterData = (await filterRes.json()) as { meals?: any[] };
+
+    if (!filterData.meals || filterData.meals.length === 0) {
+      return res.json({ ingredient, count: 0, meals: [] });
+    }
+
+    const detailedMeals: any[] = [];
+    const topMeals = filterData.meals.slice(0, 18);
+
+    for (const m of topMeals) {
+      try {
+        const detailRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${m.idMeal}`);
+        const detailData = (await detailRes.json()) as { meals?: any[] };
+        const meal = detailData.meals?.[0];
+        if (!meal) continue;
+
+        const ingredients: any[] = [];
+        for (let i = 1; i <= 20; i++) {
+          const ing = meal[`strIngredient${i}`];
+          const measure = meal[`strMeasure${i}`];
+          if (ing && ing.trim()) {
+            ingredients.push({
+              name: ing.trim(),
+              measure: (measure || '').trim(),
+            });
+          }
+        }
+
+        detailedMeals.push({
+          idMeal: meal.idMeal,
+          strMeal: meal.strMeal,
+          strCategory: meal.strCategory,
+          strArea: meal.strArea || 'International',
+          strInstructions: meal.strInstructions,
+          strMealThumb: meal.strMealThumb,
+          strTags: meal.strTags,
+          strYoutube: meal.strYoutube,
+          strSource: meal.strSource,
+          ingredients,
+        });
+      } catch (err) {
+        console.error('Error fetching detail for meal:', m.idMeal, err);
+      }
+    }
+
+    return res.json({ ingredient, count: detailedMeals.length, meals: detailedMeals });
+  } catch (error: any) {
+    console.error('Error in /api/mealdb/recipes:', error);
+    return res.status(500).json({ error: error?.message || 'Failed to fetch meal database.' });
+  }
+});
+
+/**
+ * 5. Scout Store & Aisle for a TheMealDB Recipe
+ * Takes a specific TheMealDB recipe and user's fridge items, returns store recommendations and aisle locations for missing items
+ */
+app.post('/api/mealdb/scout-recipe', async (req, res) => {
+  try {
+    const { meal, fridgeIngredients = [] } = req.body;
+    if (!meal || !meal.strMeal) {
+      return res.status(400).json({ error: 'Please provide meal details.' });
+    }
+
+    const mealIngredientsList = (meal.ingredients || [])
+      .map((i: any) => `${i.name} (${i.measure || 'to taste'})`)
+      .join(', ');
+
+    const fridgeListStr = fridgeIngredients.length > 0
+      ? fridgeIngredients.join(', ')
+      : 'Basic salt, pepper, cooking oil';
+
+    const prompt = `
+A home cook wants to make the authentic recipe "${meal.strMeal}" (${meal.strArea || 'International'} cuisine).
+
+RECIPE INGREDIENTS REQUIRED:
+${mealIngredientsList}
+
+INGREDIENTS CURRENTLY IN USER'S FRIDGE:
+${fridgeListStr}
+
+TASK:
+1. Identify which ingredients the user ALREADY HAS in their fridge (match flexibly, e.g. "Chicken Breast" matches "chicken breast", "olive oil" matches "oil").
+2. Identify all MISSING ingredients.
+3. For EACH missing ingredient:
+   - Specific store where to buy it (e.g., Asian Supermarket, Latin Carniceria, Italian Deli, Mainstream Supermarket, Indian Grocer)
+   - Store category badge: "Asian Market" | "Supermarket" | "Latin Grocer" | "Italian Deli" | "Indian Grocer" | "Whole Foods / Organic" | "Specialty Shop" | "General Store"
+   - Specific aisle/section (e.g., "Aisle 3 - Asian Condiments", "Produce Cooler Wall", "International Foods Aisle")
+   - Estimated price range (e.g. "$2.50 - $4.00")
+   - Quick practical substitute hack if they don't want to make an extra shopping trip!
+4. Provide a Chef Pro-Tip for cooking this specific dish.
+5. Provide estimated prep time, cook time, and difficulty.
+
+Return ONLY JSON:
+{
+  "ingredientsAlreadyHave": ["string"],
+  "missingIngredients": [
+    {
+      "name": "string",
+      "quantity": "string",
+      "storeType": "string",
+      "storeCategoryBadge": "Asian Market" | "Supermarket" | "Latin Grocer" | "Italian Deli" | "Indian Grocer" | "Whole Foods / Organic" | "Specialty Shop" | "General Store",
+      "aisleOrSection": "string",
+      "estimatedPrice": "string",
+      "quickSubstitute": "string"
+    }
+  ],
+  "chefTip": "string",
+  "prepTimeMinutes": number,
+  "cookTimeMinutes": number,
+  "difficulty": "Easy" | "Medium" | "Advanced",
+  "estimatedTopUpCost": "string"
+}
+`;
+
+    const response = await generateContentWithRetry({
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    const raw = response.text || '{}';
+    const parsed = JSON.parse(cleanJsonResponse(raw));
+    return res.json(parsed);
+  } catch (error: any) {
+    console.error('Error in /api/mealdb/scout-recipe:', error);
+    return res.status(500).json({ error: error?.message || 'Failed to scout recipe stores.' });
+  }
+});
+
 // Setup Vite middleware in dev or static files in production
 async function startServer() {
   if (process.env.NODE_ENV === 'production') {
