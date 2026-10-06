@@ -124,49 +124,42 @@ app.all(['/api/analyze-fridge', '/api/analyze-fridge/'], async (req, res) => {
     }
 
     const promptText = `
-You are a world-class AI culinary auditor, food recognition specialist, and computer vision master.
-Analyze the provided refrigerator, freezer, pantry, or ingredient spread input with extreme attention to detail.
+You are an expert culinary chef, fridge auditor, and zero-waste cooking master.
+Carefully inspect the provided input:
+${photoBase64 ? '- An uploaded image of the user\'s refrigerator, freezer, shelves, or ingredient spread.' : ''}
+${textIngredients ? `- User-provided text list of ingredients / pantry items: "${textIngredients}"` : ''}
+${dietaryNote}
 
-${photoBase64 ? 'PHOTO INSPECTION INSTRUCTIONS (MULTIMODAL VISION):' : 'INVENTORY AUDIT INSTRUCTIONS:'}
-1. COMPARTMENT & SHELF SCANNING:
-   - Carefully scan each visible shelf, door rack, crisper drawer, and compartment.
-   - For bottles, jars, cans, and cartons: Use visual OCR to read brand names, printed text, and labels (e.g., soy sauce, mayonnaise, milk, heavy cream, mustard, yogurt).
-   - For fresh produce: Identify vegetables, herbs, and aromatics by color, leaf shape, texture, and size (e.g., scallions, garlic bulbs, ginger, bell peppers, cilantro).
-   - For proteins: Identify poultry cuts, red meats, bacon, tofu, seafood, and eggs (check egg cartons for count if visible).
-   - For leftovers and clear containers: Estimate recognizable dishes, grains (cooked rice, pasta), or broths.
-
-2. CANONICAL CULINARY NAMES:
-   - Provide clean, standardized culinary ingredient names (e.g. "Chicken breast", "Eggs", "Garlic", "Soy sauce", "Butter", "Spinach", "Tofu") suitable for searching recipes.
-   - Categorize each ingredient into: Produce | Dairy & Eggs | Meat & Poultry | Seafood | Grains & Pasta | Pantry & Spices | Condiments & Sauces | Leftovers & Prepared | Beverages | Other.
-   - Estimate the state / fullness (e.g. "Full bag (~500g)", "About 4 eggs remaining", "Opened bottle (~60% full)", "Fresh bunch").
-   - Indicate location in the fridge: "Door rack", "Top shelf", "Middle shelf", "Crisper drawer", "Freezer", or "Countertop".
-   - Flag "isExpiringSoon": true if produce looks wilted, dairy is opened, or raw protein needs immediate cooking.
-   - Assign a detection confidence score between 0.75 and 1.00.
-
-3. CHEF AUDIT SUMMARY:
-   - Provide an encouraging, expert culinary assessment of the bounty, pointing out key flavor combinations and zero-waste priorities.
-
-4. 4 CHEF MEALS FROM AUDIT:
-   - Craft 4 diverse dishes utilizing what they already have:
-     1. Fast Weekday Meal (< 20 mins)
-     2. Hearty Comfort Dish
-     3. Fresh & Healthy Dish
-     4. Zero-Waste Rescue Dish (using up perishable/expiring items)
+Your goals:
+1. Detect and inventory all visible or typed food ingredients. Group them into realistic kitchen categories (Produce, Dairy & Eggs, Meat & Poultry, Seafood, Grains & Pasta, Pantry & Spices, Condiments & Sauces, Leftovers & Prepared, Beverages, Other).
+   Estimate the state/quantity (e.g. "Full bag", "About 3 eggs", "Opened jar (~50% full)", "Half bunch") and flag items that look perishable or expiring soon.
+2. Provide a warm, witty, encouraging chef summary of what they have and key flavor pairings.
+3. Suggest 4 creative, practical, realistic meals that can be cooked immediately or with minimal extra staples:
+   - Include 1 fast weekday dish (under 20 mins)
+   - Include 1 hearty/comfort dish
+   - Include 1 fresh/healthy dish
+   - Include 1 creative zero-waste dish that uses up perishable items
+   For each meal:
+   - Title & cuisine style
+   - Preparation time & cooking time
+   - Difficulty level (Easy, Medium, Advanced)
+   - List of matching ingredients already present in their fridge
+   - List of optional/extra ingredients that would take it to restaurant quality
+   - Step-by-step cooking instructions
+   - Chef secret tip for maximum flavor
 
 Return ONLY valid JSON matching this schema:
 {
   "detectedIngredients": [
     {
-      "name": "string (canonical culinary ingredient name)",
+      "name": "string (ingredient name)",
       "category": "Produce" | "Dairy & Eggs" | "Meat & Poultry" | "Seafood" | "Grains & Pasta" | "Pantry & Spices" | "Condiments & Sauces" | "Leftovers & Prepared" | "Beverages" | "Other",
-      "estimatedState": "string (e.g. 'Opened jar (~75% full)', 'Fresh bunch', '6 eggs')",
-      "locationInFridge": "string (e.g. 'Door rack', 'Top shelf', 'Crisper drawer')",
+      "estimatedState": "string (e.g. 'Fresh bunch', '3 eggs remaining', 'Opened container')",
       "isExpiringSoon": boolean,
-      "confidence": number,
-      "notes": "string (e.g. 'Label: Kikkoman, seal intact')"
+      "notes": "string (optional observation)"
     }
   ],
-  "chefSummary": "string",
+  "chefSummary": "string (friendly assessment of the fridge bounty)",
   "meals": [
     {
       "id": "string",
@@ -200,16 +193,6 @@ Return ONLY valid JSON matching this schema:
 
     const raw = response.text || '{}';
     const parsed = JSON.parse(cleanJsonResponse(raw));
-
-    // Tag source for detected ingredients
-    if (parsed.detectedIngredients && Array.isArray(parsed.detectedIngredients)) {
-      parsed.detectedIngredients = parsed.detectedIngredients.map((item: any) => ({
-        ...item,
-        source: photoBase64 ? 'photo' : 'manual',
-        confidence: item.confidence || 0.9,
-      }));
-    }
-
     return res.json(parsed);
   } catch (error: any) {
     console.error('Error in /api/analyze-fridge:', error);

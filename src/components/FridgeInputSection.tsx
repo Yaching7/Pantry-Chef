@@ -281,18 +281,6 @@ export const FridgeInputSection: React.FC<FridgeInputSectionProps> = ({
                   alt="Fridge preview"
                   className="w-full h-56 object-cover object-center group-hover:opacity-90 transition-opacity"
                 />
-
-                {/* Active Vision Scanning Laser Animation when auditing */}
-                {isLoading && (
-                  <div className="absolute inset-0 bg-amber-500/10 pointer-events-none flex flex-col justify-between">
-                    <div className="w-full h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-lg shadow-amber-500/80 animate-pulse" />
-                    <div className="p-3 bg-black/75 backdrop-blur-md text-amber-300 text-xs font-semibold flex items-center justify-center space-x-2">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                      <span>Scanning shelves, reading container labels &amp; auditing produce...</span>
-                    </div>
-                  </div>
-                )}
-
                 <div className="absolute top-2 right-2 flex items-center space-x-1.5 bg-black/60 backdrop-blur-md rounded-xl p-1 text-white">
                   <button
                     onClick={() => {
