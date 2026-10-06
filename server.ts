@@ -80,6 +80,39 @@ async function generateContentWithRetry(params: {
 }
 
 /**
+ * Health Check Endpoints (/api and /api/health)
+ */
+app.get(['/api', '/api/health'], async (req, res) => {
+  const jsonPath = path.resolve(__dirname, 'src/data/mealdb_chicken_recipes.json');
+  let cachedRecipesCount = 0;
+  try {
+    const fs = await import('fs');
+    if (fs.existsSync(jsonPath)) {
+      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      cachedRecipesCount = Array.isArray(data) ? data.length : 0;
+    }
+  } catch (e) {}
+
+  return res.status(200).json({
+    status: 'healthy',
+    message: 'PantryChef & Cuisine Scout API is running',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || 'development',
+    services: {
+      gemini_ai: {
+        configured: Boolean(process.env.GEMINI_API_KEY),
+        primaryModel: 'gemini-3.8-flash',
+      },
+      mealdb_database: {
+        status: 'ready',
+        cachedChickenRecipes: cachedRecipesCount,
+      },
+    },
+  });
+});
+
+/**
  * 1. Analyze Fridge (Photo and/or Text)
  */
 app.post('/api/analyze-fridge', async (req, res) => {
