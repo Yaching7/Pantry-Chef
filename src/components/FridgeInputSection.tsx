@@ -494,7 +494,7 @@ export const FridgeInputSection: React.FC<FridgeInputSectionProps> = ({
           className={`w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center space-x-2.5 transition-all shadow-lg ${
             isLoading || (!photoPreview && currentIngredients.length === 0)
               ? 'bg-stone-200 text-stone-400 dark:bg-stone-800 dark:text-stone-600 cursor-not-allowed shadow-none'
-              : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-white shadow-amber-600/30 hover:shadow-amber-600/50 hover:scale-[1.02] active:scale-[0.98]'
+              : 'theme-btn-primary hover:scale-[1.02] active:scale-[0.98]'
           }`}
         >
           {isLoading ? (

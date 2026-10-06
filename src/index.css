@@ -2,32 +2,176 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ==========================================================================
+   Culinary Ambiance Theme System
+   ========================================================================== */
+
 :root {
-  --theme-color-primary: #d97706;
-  --theme-color-secondary: #ea580c;
+  --theme-primary: #d97706;
+  --theme-secondary: #ea580c;
+  --theme-hover: #b45309;
+  --theme-gradient: linear-gradient(135deg, #d97706 0%, #ea580c 50%, #c2410c 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #d97706 100%);
+  --theme-glow: rgba(217, 119, 6, 0.35);
+  --theme-badge-bg: rgba(254, 243, 199, 0.85);
+  --theme-badge-text: #92400e;
+  --theme-badge-border: #fcd34d;
+  --theme-canvas: #fbfbfa;
 }
 
 [data-culinary-theme="warm-hearth"] {
-  --theme-color-primary: #d97706;
-  --theme-color-secondary: #ea580c;
+  --theme-primary: #d97706;
+  --theme-secondary: #ea580c;
+  --theme-hover: #b45309;
+  --theme-gradient: linear-gradient(135deg, #d97706 0%, #ea580c 50%, #c2410c 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #d97706 100%);
+  --theme-glow: rgba(217, 119, 6, 0.35);
+  --theme-badge-bg: rgba(254, 243, 199, 0.85);
+  --theme-badge-text: #92400e;
+  --theme-badge-border: #fcd34d;
+  --theme-canvas: #faf8f5;
 }
 
 [data-culinary-theme="herb-garden"] {
-  --theme-color-primary: #059669;
-  --theme-color-secondary: #0d9488;
+  --theme-primary: #059669;
+  --theme-secondary: #0d9488;
+  --theme-hover: #047857;
+  --theme-gradient: linear-gradient(135deg, #059669 0%, #0d9488 50%, #047857 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #059669 100%);
+  --theme-glow: rgba(5, 150, 105, 0.35);
+  --theme-badge-bg: rgba(209, 250, 229, 0.85);
+  --theme-badge-text: #065f46;
+  --theme-badge-border: #6ee7b7;
+  --theme-canvas: #f0fdf4;
 }
 
 [data-culinary-theme="tuscan-terracotta"] {
-  --theme-color-primary: #c2410c;
-  --theme-color-secondary: #b45309;
+  --theme-primary: #c2410c;
+  --theme-secondary: #b45309;
+  --theme-hover: #9a3412;
+  --theme-gradient: linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #b45309 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #c2410c 100%);
+  --theme-glow: rgba(194, 65, 12, 0.35);
+  --theme-badge-bg: rgba(255, 237, 213, 0.85);
+  --theme-badge-text: #9a3412;
+  --theme-badge-border: #fdba74;
+  --theme-canvas: #fff7ed;
 }
 
 [data-culinary-theme="midnight-bistro"] {
-  --theme-color-primary: #ca8a04;
-  --theme-color-secondary: #7c3aed;
+  --theme-primary: #ca8a04;
+  --theme-secondary: #7c3aed;
+  --theme-hover: #a16207;
+  --theme-gradient: linear-gradient(135deg, #b45309 0%, #7c3aed 50%, #4c1d95 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #d97706 0%, #8b5cf6 50%, #5b21b6 100%);
+  --theme-glow: rgba(202, 138, 4, 0.35);
+  --theme-badge-bg: rgba(254, 240, 138, 0.7);
+  --theme-badge-text: #713f12;
+  --theme-badge-border: #fde047;
+  --theme-canvas: #fbfbfb;
 }
 
 [data-culinary-theme="nordic-minimal"] {
-  --theme-color-primary: #0284c7;
-  --theme-color-secondary: #475569;
+  --theme-primary: #0284c7;
+  --theme-secondary: #475569;
+  --theme-hover: #0369a1;
+  --theme-gradient: linear-gradient(135deg, #0284c7 0%, #475569 50%, #0369a1 100%);
+  --theme-gradient-hover: linear-gradient(135deg, #38bdf8 0%, #64748b 50%, #0284c7 100%);
+  --theme-glow: rgba(2, 132, 199, 0.35);
+  --theme-badge-bg: rgba(224, 242, 254, 0.85);
+  --theme-badge-text: #075985;
+  --theme-badge-border: #7dd3fc;
+  --theme-canvas: #f8fafc;
 }
+
+/* ==========================================================================
+   Dark Mode Overrides
+   ========================================================================== */
+
+html.dark[data-culinary-theme="warm-hearth"],
+html.dark [data-culinary-theme="warm-hearth"] {
+  --theme-badge-bg: rgba(120, 53, 15, 0.45);
+  --theme-badge-text: #fde68a;
+  --theme-badge-border: #78350f;
+  --theme-canvas: #0c0a09;
+}
+
+html.dark[data-culinary-theme="herb-garden"],
+html.dark [data-culinary-theme="herb-garden"] {
+  --theme-badge-bg: rgba(6, 78, 59, 0.45);
+  --theme-badge-text: #a7f3d0;
+  --theme-badge-border: #064e3b;
+  --theme-canvas: #04140e;
+}
+
+html.dark[data-culinary-theme="tuscan-terracotta"],
+html.dark [data-culinary-theme="tuscan-terracotta"] {
+  --theme-badge-bg: rgba(124, 45, 18, 0.45);
+  --theme-badge-text: #fed7aa;
+  --theme-badge-border: #7c2d12;
+  --theme-canvas: #140804;
+}
+
+html.dark[data-culinary-theme="midnight-bistro"],
+html.dark [data-culinary-theme="midnight-bistro"] {
+  --theme-badge-bg: rgba(46, 16, 101, 0.55);
+  --theme-badge-text: #fef08a;
+  --theme-badge-border: #581c87;
+  --theme-canvas: #09090b;
+}
+
+html.dark[data-culinary-theme="nordic-minimal"],
+html.dark [data-culinary-theme="nordic-minimal"] {
+  --theme-badge-bg: rgba(12, 74, 110, 0.45);
+  --theme-badge-text: #bae6fd;
+  --theme-badge-border: #0c4a6e;
+  --theme-canvas: #070e18;
+}
+
+/* ==========================================================================
+   Theme Utility Classes
+   ========================================================================== */
+
+.theme-app-canvas {
+  background-color: var(--theme-canvas) !important;
+  transition: background-color 0.3s ease;
+}
+
+.theme-logo-gradient {
+  background: var(--theme-gradient) !important;
+  box-shadow: 0 4px 14px var(--theme-glow) !important;
+}
+
+.theme-text-accent {
+  color: var(--theme-primary) !important;
+}
+
+.theme-btn-primary {
+  background: var(--theme-gradient) !important;
+  box-shadow: 0 4px 16px var(--theme-glow) !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease !important;
+}
+.theme-btn-primary:hover {
+  background: var(--theme-gradient-hover) !important;
+  transform: scale(1.015);
+}
+.theme-btn-primary:active {
+  transform: scale(0.985);
+}
+
+.theme-badge {
+  background-color: var(--theme-badge-bg) !important;
+  color: var(--theme-badge-text) !important;
+  border: 1px solid var(--theme-badge-border) !important;
+}
+
+.theme-border-accent {
+  border-color: var(--theme-primary) !important;
+}
+
+.theme-banner-tint {
+  border-color: var(--theme-badge-border) !important;
+  background: radial-gradient(circle at top left, var(--theme-badge-bg), transparent 75%) !important;
+}
+

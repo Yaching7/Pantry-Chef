@@ -123,6 +123,9 @@ export default function App() {
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute('data-culinary-theme', culinaryTheme);
+    const themeObj = CULINARY_THEMES.find((t) => t.id === culinaryTheme) || CULINARY_THEMES[0];
+    root.style.setProperty('--theme-primary', themeObj.primaryColor);
+    root.style.setProperty('--theme-secondary', themeObj.secondaryColor);
     localStorage.setItem('pantry-culinary-theme', culinaryTheme);
   }, [culinaryTheme]);
 
@@ -329,7 +332,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100/70 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans selection:bg-amber-500 selection:text-white">
+    <div
+      data-culinary-theme={culinaryTheme}
+      className="min-h-screen theme-app-canvas text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors duration-300 selection:bg-amber-500 selection:text-white"
+    >
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-stone-900 dark:bg-white text-white dark:text-stone-900 px-4 py-3 rounded-2xl shadow-xl border border-stone-700 dark:border-stone-200 text-xs sm:text-sm font-semibold flex items-center space-x-2 animate-in slide-in-from-bottom duration-200">

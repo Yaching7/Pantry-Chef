@@ -65,15 +65,15 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('fridge')}>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-600 via-orange-500 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl theme-logo-gradient flex items-center justify-center text-white transition-all">
               <UtensilsCrossed className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="text-lg sm:text-xl font-black tracking-tight text-stone-900 dark:text-white">
-                  Pantry<span className="text-amber-600 dark:text-amber-400">Chef</span>
+                  Pantry<span className="theme-text-accent transition-colors">Chef</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold theme-badge">
                   <Sparkles className="w-3 h-3 mr-1" /> Cuisine Scout
                 </span>
               </div>
@@ -220,13 +220,13 @@ export const Header: React.FC<HeaderProps> = ({
               title="Look up where to buy any ingredient"
               className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-medium border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-all flex items-center space-x-1.5 shadow-sm"
             >
-              <Search className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <Search className="w-4 h-4 theme-text-accent" />
               <span className="hidden md:inline">Where to Buy?</span>
             </button>
 
             <button
               onClick={onOpenShoppingList}
-              className="relative p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white transition-all flex items-center space-x-1.5 shadow-sm shadow-amber-600/30"
+              className="relative p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-medium theme-btn-primary transition-all flex items-center space-x-1.5 shadow-sm"
             >
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline font-semibold">Store List</span>

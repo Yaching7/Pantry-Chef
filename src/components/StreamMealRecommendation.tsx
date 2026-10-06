@@ -269,7 +269,7 @@ export const StreamMealRecommendation: React.FC<StreamMealRecommendationProps> =
                 onClick={() => setSelectedIngredient(ing)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 ${
                   isSelected
-                    ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30 ring-2 ring-amber-500/30'
+                    ? 'theme-btn-primary shadow-xs ring-2 ring-stone-400/20'
                     : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300'
                 }`}
               >
@@ -476,7 +476,7 @@ export const StreamMealRecommendation: React.FC<StreamMealRecommendationProps> =
 
               <button
                 onClick={() => handleSelectAuditedRecipe(topProposedMeal)}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-white flex items-center justify-center space-x-2 shadow-md shadow-amber-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm theme-btn-primary flex items-center justify-center space-x-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
                 <span>Cook Recipe &amp; Scout Stores</span>
                 <ArrowRight className="w-4 h-4" />
@@ -602,7 +602,7 @@ export const StreamMealRecommendation: React.FC<StreamMealRecommendationProps> =
 
                   <button
                     onClick={() => handleSelectAuditedRecipe(meal)}
-                    className="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center space-x-1 transition-colors"
+                    className="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold theme-btn-primary flex items-center justify-center space-x-1 transition-all"
                   >
                     <span>View Recipe</span>
                     <ArrowRight className="w-3 h-3" />
