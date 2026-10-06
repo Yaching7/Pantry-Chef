@@ -79,38 +79,14 @@ async function generateContentWithRetry(params: {
   throw lastError;
 }
 
-/**
- * Health Check Endpoints (/api and /api/health)
- */
-app.get(['/api', '/api/health'], async (req, res) => {
-  const jsonPath = path.resolve(__dirname, 'src/data/mealdb_chicken_recipes.json');
-  let cachedRecipesCount = 0;
-  try {
-    const fs = await import('fs');
-    if (fs.existsSync(jsonPath)) {
-      const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
-      cachedRecipesCount = Array.isArray(data) ? data.length : 0;
-    }
-  } catch (e) {}
+import healthHandler from './api/health';
+import foodSelectionHandler from './api/food_selection';
 
-  return res.status(200).json({
-    status: 'healthy',
-    message: 'PantryChef & Cuisine Scout API is running',
-    timestamp: new Date().toISOString(),
-    uptimeSeconds: Math.floor(process.uptime()),
-    environment: process.env.NODE_ENV || 'development',
-    services: {
-      gemini_ai: {
-        configured: Boolean(process.env.GEMINI_API_KEY),
-        primaryModel: 'gemini-3.8-flash',
-      },
-      mealdb_database: {
-        status: 'ready',
-        cachedChickenRecipes: cachedRecipesCount,
-      },
-    },
-  });
-});
+/**
+ * Serverless Route Mounts (/api/health & /api/food_selection)
+ */
+app.all(['/api', '/api/health'], healthHandler);
+app.all('/api/food_selection', foodSelectionHandler);
 
 /**
  * 1. Analyze Fridge (Photo and/or Text)
