@@ -1,0 +1,6 @@
+{
+  "name": "PantryChef & Cuisine Scout",
+  "description": "Smart meal suggestions from your fridge ingredients with photo & text detection, cuisine inspiration, and store-specific ingredient shopping guides.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
