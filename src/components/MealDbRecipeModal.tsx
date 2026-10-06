@@ -22,7 +22,7 @@ import confetti from 'canvas-confetti';
 import { MealDBRecipe, MissingIngredientDetail } from '../types';
 
 interface MealDbRecipeModalProps {
-  recipe: MealDBRecipe | null;
+  recipe: MealDBRecipe;
   onClose: () => void;
   onAddMissingToShoppingList: (items: MissingIngredientDetail[]) => void;
   fridgeIngredients: string[];
@@ -34,7 +34,6 @@ export const MealDbRecipeModal: React.FC<MealDbRecipeModalProps> = ({
   onAddMissingToShoppingList,
   fridgeIngredients,
 }) => {
-  if (!recipe) return null;
 
   const [loadingScout, setLoadingScout] = useState(false);
   const [scoutedData, setScoutedData] = useState<{
@@ -70,6 +69,53 @@ export const MealDbRecipeModal: React.FC<MealDbRecipeModalProps> = ({
     return () => clearInterval(interval);
   }, [timerRunning, activeTimerSeconds]);
 
+  const [fullRecipe, setFullRecipe] = useState<MealDBRecipe>(recipe);
+
+  // If the recipe is from the raw filter stream without full details, fetch details
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDetails() {
+      if (recipe.ingredients && recipe.ingredients.length > 0 && recipe.strInstructions) {
+        setFullRecipe(recipe);
+        return;
+      }
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${recipe.idMeal}`);
+        if (res.ok) {
+          const data = await res.json();
+          const raw = data.meals?.[0];
+          if (raw && isMounted) {
+            const ingredients: any[] = [];
+            for (let i = 1; i <= 20; i++) {
+              const ing = raw[`strIngredient${i}`];
+              const measure = raw[`strMeasure${i}`];
+              if (ing && ing.trim()) {
+                ingredients.push({ name: ing.trim(), measure: (measure || '').trim() });
+              }
+            }
+            setFullRecipe({
+              idMeal: raw.idMeal,
+              strMeal: raw.strMeal,
+              strCategory: raw.strCategory || 'Chicken',
+              strArea: raw.strArea || 'International',
+              strInstructions: raw.strInstructions || '',
+              strMealThumb: raw.strMealThumb || recipe.strMealThumb,
+              strYoutube: raw.strYoutube || '',
+              strSource: raw.strSource || '',
+              ingredients,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch lookup for meal:', err);
+      }
+    }
+    loadDetails();
+    return () => {
+      isMounted = false;
+    };
+  }, [recipe.idMeal]);
+
   // Automatically trigger store scout on mount for this recipe
   useEffect(() => {
     let isMounted = true;
@@ -80,7 +126,7 @@ export const MealDbRecipeModal: React.FC<MealDbRecipeModalProps> = ({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            meal: recipe,
+            meal: fullRecipe,
             fridgeIngredients,
           }),
         });
@@ -98,11 +144,11 @@ export const MealDbRecipeModal: React.FC<MealDbRecipeModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [recipe.idMeal]);
+  }, [fullRecipe.idMeal, fullRecipe.ingredients?.length]);
 
   // Split raw instructions into steps
-  const steps = recipe.strInstructions
-    ? recipe.strInstructions
+  const steps = fullRecipe.strInstructions
+    ? fullRecipe.strInstructions
         .split(/\r?\n+/)
         .map((s) => s.trim())
         .filter((s) => s.length > 10)
@@ -110,16 +156,16 @@ export const MealDbRecipeModal: React.FC<MealDbRecipeModalProps> = ({
 
   const handleCopy = () => {
     const text = `
-🍳 ${recipe.strMeal} (${recipe.strArea} Cuisine - TheMealDB)
-${recipe.strMealThumb}
+🍳 ${fullRecipe.strMeal} (${fullRecipe.strArea || 'International'} Cuisine - TheMealDB)
+${fullRecipe.strMealThumb}
 
 📋 INGREDIENTS:
-${recipe.ingredients.map((i) => `• ${i.name}: ${i.measure}`).join('\n')}
+${(fullRecipe.ingredients || []).map((i) => `• ${i.name}: ${i.measure}`).join('\n')}
 
 👨‍🍳 INSTRUCTIONS:
-${recipe.strInstructions}
+${fullRecipe.strInstructions}
 
-${recipe.strYoutube ? `📺 Video: ${recipe.strYoutube}` : ''}
+${fullRecipe.strYoutube ? `📺 Video: ${fullRecipe.strYoutube}` : ''}
     `.trim();
 
     navigator.clipboard.writeText(text);
@@ -183,19 +229,19 @@ ${recipe.strYoutube ? `📺 Video: ${recipe.strYoutube}` : ''}
           <div className="absolute bottom-4 left-4 right-4">
             <div className="flex items-center space-x-2 mb-1.5">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white shadow-xs">
-                {recipe.strArea || 'International'} Cuisine
+                {fullRecipe.strArea || 'International'} Cuisine
               </span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-                TheMealDB #{recipe.idMeal}
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+                TheMealDB #{fullRecipe.idMeal}
               </span>
               {scoutedData?.estimatedTopUpCost && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/90 text-white">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/90 text-white">
                   Est. Top-up: {scoutedData.estimatedTopUpCost}
                 </span>
               )}
             </div>
             <h2 className="text-xl sm:text-3xl font-black text-white leading-tight drop-shadow-md">
-              {recipe.strMeal}
+              {fullRecipe.strMeal}
             </h2>
           </div>
         </div>
@@ -256,7 +302,7 @@ ${recipe.strYoutube ? `📺 Video: ${recipe.strYoutube}` : ''}
             <div>
               <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Ingredients</div>
               <div className="text-sm font-bold text-stone-800 dark:text-stone-200 mt-0.5">
-                {recipe.ingredients.length} items
+                {fullRecipe.ingredients?.length || 0} items
               </div>
             </div>
           </div>
@@ -267,11 +313,11 @@ ${recipe.strYoutube ? `📺 Video: ${recipe.strYoutube}` : ''}
             <div className="border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-4 bg-emerald-50/40 dark:bg-emerald-950/20">
               <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center mb-3">
                 <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-600" />
-                TheMealDB Recipe Ingredients ({recipe.ingredients.length})
+                Recipe Ingredients ({fullRecipe.ingredients?.length || 0})
               </span>
 
               <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
-                {recipe.ingredients.map((ing, i) => {
+                {(fullRecipe.ingredients || []).map((ing, i) => {
                   const inFridge = fridgeIngredients.some(
                     (f) =>
                       f.toLowerCase().includes(ing.name.toLowerCase()) ||

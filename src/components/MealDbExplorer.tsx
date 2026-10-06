@@ -2,15 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Database,
   Search,
-  Filter,
   CheckCircle2,
   ShoppingBag,
-  ExternalLink,
-  Sparkles,
   ArrowRight,
-  Flame,
   Globe2,
   RefreshCw,
+  Utensils,
+  Sparkles,
 } from 'lucide-react';
 import { MealDBRecipe } from '../types';
 
@@ -40,21 +38,29 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState('All');
 
-  // Load recipes from our database endpoint
+  // Load recipes from serverless /api/food_selection endpoint with fallback to TheMealDB
   useEffect(() => {
     let isMounted = true;
     async function loadDatabase() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/mealdb/recipes?ingredient=${encodeURIComponent(selectedIngredient)}`);
+        // Primary: use serverless /api/food_selection
+        let res = await fetch(`/api/food_selection?i=${encodeURIComponent(selectedIngredient)}`);
+        
+        // Fallback: direct TheMealDB public endpoint
+        if (!res.ok) {
+          res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(selectedIngredient)}`);
+        }
+
         if (res.ok) {
           const data = await res.json();
+          const meals = Array.isArray(data.meals) ? data.meals : [];
           if (isMounted) {
-            setRecipes(data.meals || []);
+            setRecipes(meals);
           }
         }
       } catch (err) {
-        console.error('Failed to load TheMealDB database:', err);
+        console.error('Failed to load TheMealDB data stream:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -65,38 +71,71 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
     };
   }, [selectedIngredient]);
 
-  // Extract unique areas
+  // Extract unique areas if present in the data stream
   const areas = useMemo(() => {
     const set = new Set<string>();
     recipes.forEach((r) => {
       if (r.strArea && r.strArea !== 'null') set.add(r.strArea);
     });
+    if (set.size === 0) return ['All'];
     return ['All', ...Array.from(set).sort()];
   }, [recipes]);
 
-  // Compute fridge match score for each recipe
+  // Check if user has the selected main ingredient in their fridge
+  const hasCoreIngredientInFridge = useMemo(() => {
+    const term = selectedIngredient.replace(/_/g, ' ').toLowerCase();
+    return fridgeIngredients.some((f) => {
+      const lower = f.toLowerCase();
+      return (
+        lower.includes(term) ||
+        (term.includes('chicken') && lower.includes('chicken')) ||
+        (term.includes('egg') && lower.includes('egg')) ||
+        (term.includes('beef') && lower.includes('beef')) ||
+        (term.includes('salmon') && lower.includes('salmon')) ||
+        (term.includes('pork') && lower.includes('pork')) ||
+        (term.includes('potato') && lower.includes('potato'))
+      );
+    });
+  }, [selectedIngredient, fridgeIngredients]);
+
+  // Compute fridge match score for each recipe in the data stream
   const enrichedRecipes = useMemo(() => {
     return recipes.map((recipe) => {
       let matchedCount = 0;
       const inFridge: string[] = [];
       const missing: string[] = [];
+      const ingredients = recipe.ingredients || [];
 
-      recipe.ingredients.forEach((ing) => {
-        const hasMatch = fridgeIngredients.some(
-          (f) =>
-            f.toLowerCase().includes(ing.name.toLowerCase()) ||
-            ing.name.toLowerCase().includes(f.toLowerCase())
-        );
-        if (hasMatch) {
-          matchedCount++;
-          inFridge.push(ing.name);
+      if (ingredients.length > 0) {
+        ingredients.forEach((ing) => {
+          const hasMatch = fridgeIngredients.some(
+            (f) =>
+              f.toLowerCase().includes(ing.name.toLowerCase()) ||
+              ing.name.toLowerCase().includes(f.toLowerCase())
+          );
+          if (hasMatch) {
+            matchedCount++;
+            inFridge.push(ing.name);
+          } else {
+            missing.push(ing.name);
+          }
+        });
+      } else {
+        // For raw filter stream: base match on the core filter ingredient
+        if (hasCoreIngredientInFridge) {
+          inFridge.push(selectedIngredient.replace(/_/g, ' '));
         } else {
-          missing.push(ing.name);
+          missing.push(selectedIngredient.replace(/_/g, ' '));
         }
-      });
+      }
 
-      const total = recipe.ingredients.length || 1;
-      const score = Math.round((matchedCount / total) * 100);
+      const total = ingredients.length > 0 ? ingredients.length : 1;
+      const score =
+        ingredients.length > 0
+          ? Math.round((matchedCount / total) * 100)
+          : hasCoreIngredientInFridge
+          ? 100
+          : 0;
 
       return {
         ...recipe,
@@ -105,7 +144,7 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
         missingIngredients: missing,
       };
     });
-  }, [recipes, fridgeIngredients]);
+  }, [recipes, fridgeIngredients, hasCoreIngredientInFridge, selectedIngredient]);
 
   // Filter recipes by search query and area
   const filteredRecipes = useMemo(() => {
@@ -113,8 +152,8 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
       const matchQuery =
         !searchQuery ||
         r.strMeal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.ingredients.some((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchArea = selectedArea === 'All' || r.strArea === selectedArea;
+        (r.ingredients || []).some((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchArea = selectedArea === 'All' || !r.strArea || r.strArea === selectedArea;
       return matchQuery && matchArea;
     });
   }, [enrichedRecipes, searchQuery, selectedArea]);
@@ -128,22 +167,26 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm flex items-center">
                 <Database className="w-3.5 h-3.5 mr-1.5" />
-                TheMealDB Curated Database
+                TheMealDB Data Stream
               </span>
-              <span className="text-xs text-white/80">• Real Verified Recipes</span>
+              <span className="text-xs text-white/80">• Filter: {selectedIngredient}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black mt-1.5 tracking-tight">
               Chicken Breast Recipe Database &amp; Store Scout
             </h2>
             <p className="text-xs sm:text-sm text-white/90 mt-1 max-w-2xl leading-relaxed">
-              Real world recipes fetched from TheMealDB endpoint. Each dish is cross-matched with your fridge, and our AI scouts the exact stores &amp; aisles for every missing item!
+              Connected directly to{' '}
+              <code className="bg-black/20 px-1.5 py-0.5 rounded text-white text-xs font-mono">
+                themealdb.com/api/json/v1/1/filter.php?i={selectedIngredient}
+              </code>
+              . Cross-references your fridge and scouts the exact store aisles for all missing ingredients.
             </p>
           </div>
 
           {/* Quick Ingredient Switcher */}
           <div className="shrink-0 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/20">
             <span className="text-[11px] font-bold text-white/80 block mb-1">
-              TheMealDB Filter Endpoint:
+              Active Ingredient Endpoint:
             </span>
             <select
               value={selectedIngredient}
@@ -169,31 +212,33 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search recipes or ingredients in database (e.g. curry, salad, garlic, pasta)..."
+            placeholder="Search recipes in database (e.g. curry, salad, pie, roti)..."
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-900 dark:text-white placeholder-stone-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
         </div>
 
-        {/* Cuisine Area Pills */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 pr-1">
-          <span className="text-xs font-bold text-stone-400 shrink-0 mr-1 flex items-center">
-            <Globe2 className="w-3.5 h-3.5 mr-1" />
-            Cuisine:
-          </span>
-          {areas.map((area) => (
-            <button
-              key={area}
-              onClick={() => setSelectedArea(area)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                selectedArea === area
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
-              }`}
-            >
-              {area}
-            </button>
-          ))}
-        </div>
+        {/* Cuisine Area Pills if multiple areas exist */}
+        {areas.length > 1 && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0 pr-1">
+            <span className="text-xs font-bold text-stone-400 shrink-0 mr-1 flex items-center">
+              <Globe2 className="w-3.5 h-3.5 mr-1" />
+              Cuisine:
+            </span>
+            {areas.map((area) => (
+              <button
+                key={area}
+                onClick={() => setSelectedArea(area)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  selectedArea === area
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                }`}
+              >
+                {area}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recipes Grid */}
@@ -201,7 +246,7 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
         <div className="py-20 text-center text-stone-500 space-y-3">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-amber-600" />
           <p className="text-sm font-semibold">
-            Querying TheMealDB endpoint &amp; calculating fridge match scores...
+            Streaming data from TheMealDB ({selectedIngredient})...
           </p>
         </div>
       ) : filteredRecipes.length === 0 ? (
@@ -236,10 +281,10 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent" />
 
-                    {/* Area Badge */}
+                    {/* Area or Category Badge */}
                     <div className="absolute top-3 left-3">
                       <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
-                        {recipe.strArea || 'International'}
+                        {recipe.strArea && recipe.strArea !== 'null' ? recipe.strArea : 'Chicken Dish'}
                       </span>
                     </div>
 
@@ -252,7 +297,9 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
                             : 'bg-amber-500/90 text-white'
                         }`}
                       >
-                        {recipe.matchScorePercent}% Fridge Match
+                        {hasCoreIngredientInFridge
+                          ? '✓ Chicken in Fridge'
+                          : '🛒 Chicken needed'}
                       </span>
                     </div>
 
@@ -270,37 +317,44 @@ export const MealDbExplorer: React.FC<MealDbExplorerProps> = ({
                     <div className="flex items-center justify-between text-xs font-semibold">
                       <span className="text-emerald-700 dark:text-emerald-400 flex items-center">
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                        {recipe.inFridgeIngredients?.length || 0} in fridge
+                        {hasCoreIngredientInFridge ? 'Core protein ready' : 'Protein needed'}
                       </span>
-                      <span className="text-stone-500 flex items-center">
-                        <ShoppingBag className="w-3.5 h-3.5 mr-1 text-amber-500" />
-                        {recipe.missingIngredients?.length || 0} to buy
+                      <span className="text-stone-400 text-[11px]">
+                        TheMealDB #{recipe.idMeal}
                       </span>
                     </div>
 
-                    {/* Key Ingredients tags */}
-                    <div className="flex flex-wrap gap-1 max-h-16 overflow-hidden">
-                      {recipe.ingredients.slice(0, 5).map((ing, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
-                        >
-                          {ing.name}
-                        </span>
-                      ))}
-                      {recipe.ingredients.length > 5 && (
-                        <span className="px-1.5 py-0.5 text-[10px] text-stone-400">
-                          +{recipe.ingredients.length - 5} more
-                        </span>
-                      )}
-                    </div>
+                    {/* Ingredients tags if already present in stream, or stream preview */}
+                    {recipe.ingredients && recipe.ingredients.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 max-h-16 overflow-hidden">
+                        {recipe.ingredients.slice(0, 5).map((ing, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300"
+                          >
+                            {ing.name}
+                          </span>
+                        ))}
+                        {recipe.ingredients.length > 5 && (
+                          <span className="px-1.5 py-0.5 text-[10px] text-stone-400">
+                            +{recipe.ingredients.length - 5} more
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center">
+                        <Utensils className="w-3.5 h-3.5 mr-1 text-amber-500" />
+                        <span>Filter stream: Official TheMealDB Chicken Breast Recipe</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Footer Action */}
                 <div className="p-4 bg-stone-50 dark:bg-stone-800/40 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
-                  <span className="text-[11px] text-stone-400">
-                    TheMealDB #{recipe.idMeal}
+                  <span className="text-[11px] text-stone-500 font-medium flex items-center">
+                    <Sparkles className="w-3 h-3 text-amber-500 mr-1" />
+                    Store &amp; Aisle Guide
                   </span>
                   <button
                     onClick={() => onSelectRecipe(recipe)}
