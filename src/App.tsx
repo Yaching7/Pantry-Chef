@@ -83,6 +83,33 @@ export default function App() {
   const [isGeneratingCuisine, setIsGeneratingCuisine] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Theme state: 'light' | 'dark'
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') {
+        return stored;
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    showToast(theme === 'light' ? '🌙 Dark mode activated' : '☀️ Light mode activated');
+  };
+
   // Success notification toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -295,6 +322,8 @@ export default function App() {
         shoppingListCount={shoppingList.filter((i) => !i.checked).length}
         onOpenShoppingList={() => setIsShoppingListOpen(true)}
         onOpenIngredientScout={() => setIsIngredientScoutOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Global Error Alert Banner */}

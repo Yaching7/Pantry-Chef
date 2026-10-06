@@ -1,5 +1,15 @@
 import React from 'react';
-import { Refrigerator, Globe2, ShoppingCart, Search, UtensilsCrossed, Sparkles, Database } from 'lucide-react';
+import {
+  Refrigerator,
+  Globe2,
+  ShoppingCart,
+  Search,
+  UtensilsCrossed,
+  Sparkles,
+  Database,
+  Sun,
+  Moon,
+} from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'fridge' | 'mealdb' | 'cuisine';
@@ -8,6 +18,8 @@ interface HeaderProps {
   shoppingListCount: number;
   onOpenShoppingList: () => void;
   onOpenIngredientScout: () => void;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   shoppingListCount,
   onOpenShoppingList,
   onOpenIngredientScout,
+  theme,
+  onToggleTheme,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 transition-colors">
@@ -86,8 +100,28 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </nav>
 
-          {/* Utility Tools: Shopping List & Ingredient Scout */}
+          {/* Utility Tools: Shopping List, Ingredient Scout & Theme Selector */}
           <div className="flex items-center space-x-2">
+            {/* Light / Dark Mode Toggle */}
+            <button
+              onClick={onToggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-medium border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-all flex items-center space-x-1.5 shadow-sm"
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-400" />
+                  <span className="hidden lg:inline text-xs font-semibold">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-stone-600 dark:text-stone-400" />
+                  <span className="hidden lg:inline text-xs font-semibold">Dark</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={onOpenIngredientScout}
               title="Look up where to buy any ingredient"
