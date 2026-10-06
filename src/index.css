@@ -1,3 +1,33 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --theme-color-primary: #d97706;
+  --theme-color-secondary: #ea580c;
+}
+
+[data-culinary-theme="warm-hearth"] {
+  --theme-color-primary: #d97706;
+  --theme-color-secondary: #ea580c;
+}
+
+[data-culinary-theme="herb-garden"] {
+  --theme-color-primary: #059669;
+  --theme-color-secondary: #0d9488;
+}
+
+[data-culinary-theme="tuscan-terracotta"] {
+  --theme-color-primary: #c2410c;
+  --theme-color-secondary: #b45309;
+}
+
+[data-culinary-theme="midnight-bistro"] {
+  --theme-color-primary: #ca8a04;
+  --theme-color-secondary: #7c3aed;
+}
+
+[data-culinary-theme="nordic-minimal"] {
+  --theme-color-primary: #0284c7;
+  --theme-color-secondary: #475569;
+}

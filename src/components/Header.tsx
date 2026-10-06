@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Refrigerator,
   Globe2,
@@ -9,7 +9,10 @@ import {
   Database,
   Sun,
   Moon,
+  Palette,
+  Check,
 } from 'lucide-react';
+import { CULINARY_THEMES } from '../data/themes';
 
 interface HeaderProps {
   activeTab: 'fridge' | 'mealdb' | 'cuisine';
@@ -20,6 +23,8 @@ interface HeaderProps {
   onOpenIngredientScout: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  culinaryTheme: string;
+  onSelectCulinaryTheme: (themeId: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,7 +36,29 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenIngredientScout,
   theme,
   onToggleTheme,
+  culinaryTheme,
+  onSelectCulinaryTheme,
 }) => {
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+
+  const activeThemeObj =
+    CULINARY_THEMES.find((t) => t.id === culinaryTheme) || CULINARY_THEMES[0];
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(event.target as Node)) {
+        setIsThemeMenuOpen(false);
+      }
+    }
+    if (isThemeMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isThemeMenuOpen]);
   return (
     <header className="sticky top-0 z-30 bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,8 +127,74 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </nav>
 
-          {/* Utility Tools: Shopping List, Ingredient Scout & Theme Selector */}
+          {/* Utility Tools: Theme Picker, Light/Dark, Shopping List & Ingredient Scout */}
           <div className="flex items-center space-x-2">
+            {/* Culinary Theme Palette Selector */}
+            <div className="relative" ref={themeMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+                title="Choose Culinary Theme"
+                aria-label="Choose Culinary Theme"
+                className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs sm:text-sm font-medium border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-all flex items-center space-x-1.5 shadow-sm"
+              >
+                <Palette className="w-4 h-4 text-amber-500" />
+                <span className="hidden xl:inline text-xs font-semibold">{activeThemeObj.name}</span>
+                <span
+                  className="w-2.5 h-2.5 rounded-full inline-block shadow-xs shrink-0"
+                  style={{ backgroundColor: activeThemeObj.primaryColor }}
+                />
+              </button>
+
+              {isThemeMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 border-b border-stone-100 dark:border-stone-800 mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">
+                      Culinary Ambiances
+                    </span>
+                    <span className="text-[10px] text-stone-400">5 Presets</span>
+                  </div>
+                  <div className="space-y-1">
+                    {CULINARY_THEMES.map((t) => {
+                      const isCurrent = t.id === culinaryTheme;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            onSelectCulinaryTheme(t.id);
+                            setIsThemeMenuOpen(false);
+                          }}
+                          className={`w-full px-3 py-2 rounded-xl text-left flex items-center justify-between transition-all ${
+                            isCurrent
+                              ? 'bg-amber-50/70 dark:bg-amber-950/40 text-stone-900 dark:text-white font-bold ring-1 ring-amber-500/30'
+                              : 'hover:bg-stone-50 dark:hover:bg-stone-800/60 text-stone-700 dark:text-stone-300'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2.5">
+                            <span className="text-base shrink-0">{t.icon}</span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-semibold flex items-center space-x-1.5">
+                                <span className="truncate">{t.name}</span>
+                                <span
+                                  className="w-2 h-2 rounded-full inline-block shrink-0"
+                                  style={{ backgroundColor: t.primaryColor }}
+                                />
+                              </div>
+                              <div className="text-[10px] text-stone-400 dark:text-stone-500 line-clamp-1">
+                                {t.tagline}
+                              </div>
+                            </div>
+                          </div>
+                          {isCurrent && <Check className="w-4 h-4 text-emerald-500 shrink-0 ml-1" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Light / Dark Mode Toggle */}
             <button
               onClick={onToggleTheme}

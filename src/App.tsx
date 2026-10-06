@@ -31,6 +31,7 @@ import { IngredientScoutModal } from './components/IngredientScoutModal';
 import { MealDbExplorer } from './components/MealDbExplorer';
 import { MealDbRecipeModal } from './components/MealDbRecipeModal';
 import { StreamMealRecommendation } from './components/StreamMealRecommendation';
+import { CULINARY_THEMES } from './data/themes';
 
 import {
   DetectedIngredient,
@@ -108,6 +109,29 @@ export default function App() {
   const handleToggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
     showToast(theme === 'light' ? '🌙 Dark mode activated' : '☀️ Light mode activated');
+  };
+
+  // Culinary ambiance theme: 'warm-hearth' | 'herb-garden' | 'tuscan-terracotta' | 'midnight-bistro' | 'nordic-minimal'
+  const [culinaryTheme, setCulinaryTheme] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('pantry-culinary-theme');
+      if (stored) return stored;
+    }
+    return 'warm-hearth';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-culinary-theme', culinaryTheme);
+    localStorage.setItem('pantry-culinary-theme', culinaryTheme);
+  }, [culinaryTheme]);
+
+  const handleSelectCulinaryTheme = (themeId: string) => {
+    setCulinaryTheme(themeId);
+    const themeObj = CULINARY_THEMES.find((t) => t.id === themeId);
+    if (themeObj) {
+      showToast(`🎨 Switched theme to ${themeObj.name} ${themeObj.icon}`);
+    }
   };
 
   // Success notification toast
@@ -324,6 +348,8 @@ export default function App() {
         onOpenIngredientScout={() => setIsIngredientScoutOpen(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        culinaryTheme={culinaryTheme}
+        onSelectCulinaryTheme={handleSelectCulinaryTheme}
       />
 
       {/* Global Error Alert Banner */}
