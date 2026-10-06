@@ -86,12 +86,15 @@ export default async function handler(req: any, res: any) {
   try {
     // Extract query parameter, default to 'chicken_breast'
     const url = new URL(req.url || '/', `http://${req.headers?.host || 'localhost'}`);
-    const ingredient =
+    const rawIngredient =
       req.query?.i ||
       req.query?.ingredient ||
       url.searchParams.get('i') ||
       url.searchParams.get('ingredient') ||
       'chicken_breast';
+
+    // Normalize ingredient for TheMealDB API (lowercase, replace spaces with underscores)
+    const ingredient = String(rawIngredient).trim().toLowerCase().replace(/\s+/g, '_');
 
     const enrich =
       req.query?.enrich !== 'false' &&
@@ -111,32 +114,56 @@ export default async function handler(req: any, res: any) {
 
     // Pull from TheMealDB endpoint (no API key needed)
     const mealDbEndpoint = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(ingredient)}`;
-    const upstreamRes = await fetch(mealDbEndpoint);
-
-    if (!upstreamRes.ok) {
-      throw new Error(`TheMealDB responded with HTTP ${upstreamRes.status}`);
+    let upstreamRes: Response | null = null;
+    try {
+      upstreamRes = await fetch(mealDbEndpoint);
+    } catch (fetchErr) {
+      console.warn(`Upstream fetch failed for ${mealDbEndpoint}:`, fetchErr);
     }
 
-    const upstreamData = (await upstreamRes.json()) as { meals?: any[] };
-    const rawMeals = upstreamData.meals || [];
+    let rawMeals: any[] = [];
+    if (upstreamRes && upstreamRes.ok) {
+      const upstreamData = (await upstreamRes.json().catch(() => ({}))) as { meals?: any[] };
+      rawMeals = upstreamData.meals || [];
+    }
+
+    // Local fallback if upstream empty or failed and querying chicken
+    if (rawMeals.length === 0 && (ingredient.includes('chicken') || ingredient === 'chicken_breast')) {
+      try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const localPath = path.resolve(process.cwd(), 'src/data/mealdb_chicken_recipes.json');
+        if (fs.existsSync(localPath)) {
+          const fallbackData = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
+          rawMeals = fallbackData;
+        }
+      } catch (localErr) {
+        console.warn('Could not read local chicken fallback:', localErr);
+      }
+    }
 
     let meals: MealDBFoodItem[] = [];
 
     if (enrich && rawMeals.length > 0) {
-      // Enrich up to 20 meals with full ingredients and instructions
-      const detailPromises = rawMeals.slice(0, 20).map(async (m) => {
-        const detail = await fetchMealDetails(m.idMeal);
-        return (
-          detail || {
-            idMeal: m.idMeal,
-            strMeal: m.strMeal,
-            strMealThumb: m.strMealThumb,
-            strArea: 'International',
-            ingredients: [],
-          }
-        );
-      });
-      meals = await Promise.all(detailPromises);
+      // If items already have ingredients (e.g. from local fallback), use directly
+      if (rawMeals[0]?.ingredients && Array.isArray(rawMeals[0]?.ingredients)) {
+        meals = rawMeals;
+      } else {
+        // Enrich up to 20 meals with full ingredients and instructions
+        const detailPromises = rawMeals.slice(0, 20).map(async (m) => {
+          const detail = await fetchMealDetails(m.idMeal);
+          return (
+            detail || {
+              idMeal: m.idMeal,
+              strMeal: m.strMeal,
+              strMealThumb: m.strMealThumb,
+              strArea: 'International',
+              ingredients: [],
+            }
+          );
+        });
+        meals = await Promise.all(detailPromises);
+      }
     } else {
       meals = rawMeals.map((m) => ({
         idMeal: m.idMeal,

@@ -226,6 +226,20 @@ export default function App() {
     showToast(`🛒 Added ${items.length} items to your Store Shopping List!`);
   };
 
+  const handleAddStreamMissingIngredients = (ingredientNames: string[], recipeTitle: string) => {
+    const details: MissingIngredientDetail[] = ingredientNames.map((name) => ({
+      name,
+      quantity: '1 portion / unit',
+      storeType: 'Local Supermarket / Grocery',
+      storeCategoryBadge: 'Supermarket',
+      aisleOrSection: 'Grocery & Produce Section',
+      estimatedPrice: '$2.00 - $3.50',
+      quickSubstitute: 'Check pantry or substitute with similar ingredient',
+    }));
+    handleAddMissingToShoppingList(details);
+    showToast(`🛒 Added ${ingredientNames.length} missing items for "${recipeTitle}" to your shopping list!`);
+  };
+
   const handleToggleShoppingItem = (id: string) => {
     setShoppingList((prev) =>
       prev.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i))
@@ -314,6 +328,7 @@ export default function App() {
                 fridgeIngredients={fridgeIngredients}
                 onSelectRecipe={(recipe) => setSelectedMealDbRecipe(recipe)}
                 onViewAllStreamRecipes={() => setActiveTab('mealdb')}
+                onAddMissingToShoppingList={handleAddStreamMissingIngredients}
               />
             )}
 
